@@ -1,0 +1,36 @@
+# virtual environment
+venv/
+
+# python cache
+__pycache__/
+*.pyc
+
+# personal data / logs
+data/activity.log
+data/*.log
+data/hud_status.json
+
+# voice cache (regenerated automatically)
+voice/cache/
+
+# the real security file — only the .example version gets committed
+core/security.py
+
+# personal handoff/roadmap docs — keep local only
+docs/*handoff*
+docs/*roadmap*
+docs/*.pdf
+docs/*_notebook_*
+docs/*session_update*
+
+# backup files
+*.bak
+*.bak_hud
+*.debug
+
+# OS/editor junk
+.DS_Store
+*.swp
+docs/jarvis_notes_RECOVERED.txt
+voice/audition/kokoro-v1.0.onnx
+voice/audition/voices-v1.0.bin

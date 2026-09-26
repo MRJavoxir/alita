@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ALITA</title>
+<style>
+  :root{
+    --bg:#050809; --panel:#0a1113; --panel-b:rgba(53,224,240,.14);
+    --cyan:#3ee4f2; --cyan-dim:#1c7d87; --text:#cfeef1; --dim:#5f8489;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+    box-sizing:border-box;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);
+    font-family: ui-monospace, "SF Mono", "JetBrains Mono", Consolas, monospace;
+    overflow:hidden;}
+  .app{display:flex;flex-direction:column;height:100%;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;
+    padding:14px 24px;padding-top:calc(14px + env(safe-area-inset-top,0px));
+    border-bottom:1px solid var(--panel-b);flex-shrink:0;}
+  .brand{display:flex;align-items:center;gap:14px;font-size:20px;font-weight:700;letter-spacing:8px;color:var(--cyan);}
+  .dot{width:7px;height:7px;border-radius:50%;background:#3ef27a;box-shadow:0 0 8px #3ef27a;}
+  .online{font-size:11px;letter-spacing:2px;color:var(--dim);display:flex;align-items:center;gap:6px;}
+  .clock{font-size:13px;letter-spacing:2px;color:var(--text);opacity:.85;}
+  .rightmeta{font-size:11px;letter-spacing:1px;color:var(--dim);}
+
+  .main{flex:1;display:grid;grid-template-columns:280px 1fr 320px;min-height:0;}
+  @media (max-width:900px){.main{grid-template-columns:1fr;}
+    .side{display:none;}}
+
+  .side{padding:20px;overflow-y:auto;}
+  .side.left{border-right:1px solid var(--panel-b);}
+  .side.right{border-left:1px solid var(--panel-b);display:flex;flex-direction:column;}
+
+  .card{background:var(--panel);border:1px solid var(--panel-b);border-radius:6px;
+    padding:16px;margin-bottom:16px;}
+  .card h3{margin:0 0 12px;font-size:11px;letter-spacing:2px;color:var(--dim);font-weight:600;
+    display:flex;justify-content:space-between;}
+  .row{display:flex;justify-content:space-between;align-items:center;font-size:12px;
+    color:var(--dim);margin-bottom:6px;}
+  .row b{color:var(--text);font-size:13px;font-weight:600;}
+  .bar{height:3px;background:#12191b;border-radius:2px;overflow:hidden;margin-bottom:14px;}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan-dim),var(--cyan));
+    transition:width .6s ease;}
+  .triple{display:flex;justify-content:space-between;margin-top:4px;}
+  .triple div{text-align:center;}
+  .triple .n{font-size:20px;color:var(--cyan);font-weight:700;}
+  .triple .l{font-size:9px;color:var(--dim);letter-spacing:1px;margin-top:2px;}
+  .therm-row{display:flex;justify-content:space-between;font-size:12px;color:var(--dim);
+    padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+  .therm-row b{color:var(--text);font-weight:500;}
+  .uptime{font-size:26px;color:var(--cyan);font-weight:700;letter-spacing:1px;}
+  .uptime-l{font-size:10px;color:var(--dim);margin-bottom:14px;}
+
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    position:relative;gap:22px;padding:20px;}
+  .orbwrap{position:relative;width:min(46vh,420px);aspect-ratio:1;}
+  canvas{width:100%;height:100%;display:block;}
+  .word{font-size:26px;letter-spacing:14px;font-weight:700;color:var(--cyan);
+    text-shadow:0 0 18px rgba(62,228,242,.5);}
+  .status{font-size:12px;letter-spacing:2px;color:var(--dim);display:flex;align-items:center;gap:8px;}
+  .status .dot{background:var(--cyan);box-shadow:0 0 8px var(--cyan);}
+  .states{display:flex;gap:8px;}
+  .states button{background:transparent;border:1px solid var(--panel-b);color:var(--dim);
+    font-family:inherit;font-size:11px;letter-spacing:1px;padding:8px 18px;border-radius:4px;
+    cursor:pointer;transition:.2s;}
+  .states button.active{color:var(--cyan);border-color:var(--cyan-dim);background:rgba(62,228,242,.06);}
+
+  .convhead{display:flex;justify-content:space-between;align-items:center;font-size:11px;
+    letter-spacing:2px;color:var(--dim);margin-bottom:14px;}
+  .convhead span{cursor:pointer;}
+  .messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+  .msg{background:var(--panel);border:1px solid var(--panel-b);border-radius:8px;padding:12px 14px;
+    font-size:13px;line-height:1.4;}
+  .msg time{display:block;font-size:10px;color:var(--dim);margin-top:6px;}
+  .msg.user{border-left:3px solid var(--accent, #4cc9f0);}
+  .msg.assistant{border-left:3px solid var(--dim, #6c7a7d);}
+  .inputrow{display:flex;gap:8px;margin-top:14px;flex-shrink:0;}
+  .inputrow input{flex:1;background:var(--panel);border:1px solid var(--panel-b);border-radius:6px;
+    color:var(--text);padding:10px 12px;font-family:inherit;font-size:12px;}
+  .inputrow input:focus{outline:none;border-color:var(--cyan-dim);}
+  .inputrow button{background:var(--cyan-dim);border:none;color:#04191c;border-radius:6px;
+    width:38px;cursor:pointer;font-size:14px;}
+  .footrow{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);
+    letter-spacing:1px;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">A L I T A</div>
+    <div class="online"><span class="dot"></span> ONLINE</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="rightmeta" id="hwline">Intel Core Ultra 7 · 16 GB</div>
+  </div>
+
+  <div class="main">
+    <div class="side left">
+      <div class="card">
+        <h3>SYSTEM STATS</h3>
+        <div class="row">CPU <b id="cpuv">8%</b></div>
+        <div class="bar"><i id="cpubar" style="width:8%"></i></div>
+        <div class="row">RAM <b id="ramv">7.1 / 16 GB</b></div>
+        <div class="bar"><i id="rambar" style="width:44%"></i></div>
+        <div class="triple">
+          <div><div class="n" id="t1">8%</div><div class="l">CPU</div></div>
+          <div><div class="n" id="t2">44%</div><div class="l">MEM</div></div>
+          <div><div class="n" id="t3">52%</div><div class="l">DISK</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>THERMAL</h3>
+        <div id="thermbox"></div>
+      </div>
+      <div class="card">
+        <h3>SESSION</h3>
+        <div class="uptime" id="uptime">00:00:00</div>
+        <div class="uptime-l">uptime</div>
+        <div class="triple" style="justify-content:flex-start;gap:34px;">
+          <div style="text-align:left"><div class="n" style="font-size:16px">1</div><div class="l">SESSIONS</div></div>
+          <div style="text-align:left"><div class="n" style="font-size:16px" id="cmdcount">0</div><div class="l">COMMANDS</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="center">
+      <div class="orbwrap"><canvas id="orb"></canvas></div>
+      <div class="word">A L I T A</div>
+      <div class="status"><span class="dot"></span><span id="statustext">Listening for wake word...</span></div>
+      <div class="states">
+        <button data-s="idle">IDLE</button>
+        <button data-s="listening" class="active">LISTENING</button>
+        <button data-s="speaking">SPEAKING</button>
+      </div>
+    </div>
+
+    <div class="side right">
+      <div class="convhead">CONVERSATION <span id="clearbtn">CLEAR</span></div>
+      <div class="messages" id="messages">
+        <div class="msg">Hello. I'm Alita. How can I help you today?<time>11:08</time></div>
+      </div>
+      <div class="inputrow">
+        <input id="msgin" placeholder="Type a message...">
+        <button id="sendbtn">➤</button>
+      </div>
+      <div class="footrow"><span>VOICE</span><span>SPEAK</span><span id="statefoot">IDLE</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- clock ----
+function tick(){
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    d.toTimeString().slice(0,8) + '  |  ' + d.toDateString().slice(4);
+}
+tick(); setInterval(tick,1000);
+
+// ---- real stats, pushed in from Python ----
+window.updateStats = function(d){
+  document.getElementById('cpuv').textContent = d.cpu+'%';
+  document.getElementById('cpubar').style.width = d.cpu+'%';
+  document.getElementById('ramv').textContent = d.ram_used_gb+' / '+d.ram_total_gb+' GB';
+  document.getElementById('rambar').style.width = d.ram_pct+'%';
+  document.getElementById('t1').textContent = d.cpu+'%';
+  document.getElementById('t2').textContent = d.ram_pct+'%';
+  document.getElementById('t3').textContent = d.disk_pct+'%';
+  document.getElementById('thermbox').innerHTML = d.therm.map(x=>
+    `<div class="therm-row"><span>${x.label}</span><b>${x.temp}°C</b></div>`
+  ).join('');
+};
+
+// ---- uptime ----
+let secs=0;
+setInterval(()=>{
+  secs++;
+  const h=String(Math.floor(secs/3600)).padStart(2,'0');
+  const m=String(Math.floor(secs/60)%60).padStart(2,'0');
+  const s=String(secs%60).padStart(2,'0');
+  document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
+},1000);
+
+// ---- state buttons ----
+const stateColors = {idle:'#5f8489', listening:'#3ee4f2', speaking:'#3ef27a'};
+const stateText = {idle:'Idle.', listening:'Listening for wake word...', speaking:'Speaking...'};
+function applyState(s){
+  document.querySelectorAll('.states button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.s === s);
+  });
+  document.getElementById('statustext').textContent = stateText[s];
+  document.getElementById('statefoot').textContent = s.toUpperCase();
+  orbState = s;
+}
+document.querySelectorAll('.states button').forEach(btn=>{
+  btn.addEventListener('click',()=> applyState(btn.dataset.s));
+});
+window.setHudState = applyState;
+
+// ---- chat demo ----
+function addMsg(text, role){
+  const box=document.getElementById('messages');
+  const t=new Date().toTimeString().slice(0,5);
+  const el=document.createElement('div');
+  el.className='msg' + (role ? ' '+role : '');
+  el.innerHTML = text.replace(/</g,'&lt;')+`<time>${t}</time>`;
+  box.appendChild(el); box.scrollTop = box.scrollHeight;
+}
+window.addMsg = addMsg;
+document.getElementById('sendbtn').addEventListener('click', send);
+document.getElementById('msgin').addEventListener('keydown', e=>{if(e.key==='Enter')send();});
+function send(){
+  const inp=document.getElementById('msgin');
+  const text = inp.value.trim();
+  if(!text)return;
+  inp.value='';
+  if(window.pywebview && window.pywebview.api){
+    window.pywebview.api.send_message(text);
+  }
+  document.getElementById('cmdcount').textContent =
+    (parseInt(document.getElementById('cmdcount').textContent)+1);
+}
+document.getElementById('clearbtn').addEventListener('click',()=>{
+  document.getElementById('messages').innerHTML='';
+});
+
+// ---- ORB: canvas 2d particle sphere, no libraries ----
+const canvas = document.getElementById('orb');
+const ctx = canvas.getContext('2d');
+let orbState = 'listening';
+let W,H,DPR;
+function resize(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  W = canvas.clientWidth; H = canvas.clientHeight;
+  canvas.width = W*DPR; canvas.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize',resize);
+resize();
+
+const N = 14;
+const particles = Array.from({length:N}, (_,i)=>({
+  angle: Math.random()*Math.PI*2,
+  radius: 0.18 + Math.random()*0.30,
+  speed: (0.15+Math.random()*0.25) * (Math.random()<0.5?-1:1),
+  z: Math.random(),
+  size: 1.4+Math.random()*1.8
+}));
+
+let lastTs=0, scaleNow=0.92, freqNow=1.7, ampNow=0.02, breathePhase=0,
+    nextJitterAt=0, freqJitter=3.4, ampJitter=0.045;
+function loop(ts){
+  requestAnimationFrame(loop);
+  if(!lastTs) lastTs = ts;
+  const dt = Math.min((ts-lastTs)/1000, 0.05); // real seconds since last frame, clamped
+  lastTs = ts;
+  const t = ts/1000;
+  const cx=W/2, cy=H/2, R=Math.min(W,H)/2;
+  ctx.clearRect(0,0,W,H);
+
+  const color = stateColors[orbState];
+  const speedMul = orbState==='speaking'?1.8:orbState==='idle'?0.4:1;
+
+  // shape-shift: whole orb grows/shrinks by state. Eased slowly (over ~half
+  // a second) so switching states is a gradual swell, not a snap-jump
+  const targetScale = {idle:0.68, listening:0.92, speaking:1.05}[orbState];
+  scaleNow += (targetScale - scaleNow) * (1 - Math.pow(0.15, dt));
+
+  // one smooth wave drives ALL the "breathing" motion. Base frequency/amount
+  // ease toward the state's target (same slow swell). While speaking, the
+  // target itself gently drifts to a new random value every ~0.3-0.8s and
+  // is eased toward — so no two pulses are quite identical, like it's
+  // actually reacting to speech, instead of one perfect repeating metronome
+  if(orbState==='speaking' && t > nextJitterAt){
+    freqJitter = 2.6 + Math.random()*1.8;   // 2.6–4.4
+    ampJitter  = 0.03 + Math.random()*0.035; // 0.03–0.065
+    nextJitterAt = t + 0.3 + Math.random()*0.5;
+  }
+  const freqTarget = {idle:1.0, listening:1.7, speaking:freqJitter}[orbState];
+  const ampTarget  = {idle:0.012, listening:0.02, speaking:ampJitter}[orbState];
+  freqNow += (freqTarget - freqNow) * (1 - Math.pow(0.15, dt));
+  ampNow  += (ampTarget  - ampNow)  * (1 - Math.pow(0.15, dt));
+  breathePhase += freqNow * dt;
+  const breathe = 1 + Math.sin(breathePhase) * ampNow;
+
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.scale(scaleNow*breathe, scaleNow*breathe);
+  ctx.translate(-cx,-cy);
+
+  // outer wavy blob (soft glow silhouette)
+  ctx.save();
+  ctx.globalAlpha=.18;
+  ctx.beginPath();
+  const waves=7;
+  for(let i=0;i<=64;i++){
+    const a=(i/64)*Math.PI*2;
+    const wob = Math.sin(a*waves + t*0.6)*R*0.035;
+    const r = R*0.95 + wob;
+    const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.stroke();
+  ctx.restore();
+
+  // solid ring
+  ctx.beginPath();
+  ctx.arc(cx,cy,R*0.78,0,Math.PI*2);
+  ctx.strokeStyle=color; ctx.globalAlpha=.55; ctx.lineWidth=1.4; ctx.stroke();
+  ctx.globalAlpha=1;
+
+  // tick-mark reticle ring (sci-fi instrument look)
+  ctx.save();
+  ctx.translate(cx,cy); ctx.rotate(-t*0.12*speedMul); ctx.translate(-cx,-cy);
+  const ticks=48, tickR=R*0.85;
+  for(let i=0;i<ticks;i++){
+    const a=(i/ticks)*Math.PI*2;
+    const long = i%4===0;
+    const r1=tickR, r2=tickR - (long?R*0.05:R*0.022);
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1);
+    ctx.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2);
+    ctx.strokeStyle=color; ctx.globalAlpha= long? .55:.25; ctx.lineWidth=long?1.4:0.8;
+    ctx.stroke();
+  }
+  ctx.restore();
+  ctx.globalAlpha=1;
+
+  // dashed rotating ring
+  ctx.save();
+  ctx.translate(cx,cy); ctx.rotate(t*0.35*speedMul); ctx.translate(-cx,-cy);
+  ctx.setLineDash([R*0.12, R*0.09]);
+  ctx.beginPath();
+  ctx.arc(cx,cy,R*0.92,0,Math.PI*2);
+  ctx.strokeStyle=color; ctx.globalAlpha=.7; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+  ctx.setLineDash([]);
+
+  // counter-rotating inner segmented ring
+  ctx.save();
+  ctx.translate(cx,cy); ctx.rotate(-t*0.55*speedMul); ctx.translate(-cx,-cy);
+  const segR = R*0.58, segs=6, gap=0.12;
+  for(let i=0;i<segs;i++){
+    const a0=(i/segs)*Math.PI*2, a1=a0+(Math.PI*2/segs)*(1-gap);
+    ctx.beginPath(); ctx.arc(cx,cy,segR,a0,a1);
+    ctx.strokeStyle=color; ctx.globalAlpha=.5; ctx.lineWidth=2.4; ctx.stroke();
+  }
+  ctx.restore();
+  ctx.globalAlpha=1;
+
+  // rotating triangle / core cage (adds geometric complexity at a glance)
+  ctx.save();
+  ctx.translate(cx,cy); ctx.rotate(t*0.5*speedMul); ctx.translate(-cx,-cy);
+  ctx.beginPath();
+  for(let i=0;i<3;i++){
+    const a=(i/3)*Math.PI*2 - Math.PI/2;
+    const x=cx+Math.cos(a)*R*0.34, y=cy+Math.sin(a)*R*0.34;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle=color; ctx.globalAlpha=.4; ctx.lineWidth=1; ctx.stroke();
+  ctx.restore();
+  ctx.save();
+  ctx.translate(cx,cy); ctx.rotate(-t*0.4*speedMul); ctx.translate(-cx,-cy);
+  ctx.beginPath();
+  for(let i=0;i<3;i++){
+    const a=(i/3)*Math.PI*2 + Math.PI/2;
+    const x=cx+Math.cos(a)*R*0.34, y=cy+Math.sin(a)*R*0.34;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle=color; ctx.globalAlpha=.4; ctx.lineWidth=1; ctx.stroke();
+  ctx.restore();
+  ctx.globalAlpha=1;
+
+  // orbiting satellite markers on the outer ring
+  for(let i=0;i<3;i++){
+    const a = t*0.6*speedMul + (i/3)*Math.PI*2;
+    const sx=cx+Math.cos(a)*R*0.92, sy=cy+Math.sin(a)*R*0.92;
+    ctx.beginPath(); ctx.arc(sx,sy,3,0,Math.PI*2);
+    ctx.fillStyle=color; ctx.globalAlpha=.9; ctx.fill();
+    ctx.beginPath(); ctx.arc(sx,sy,6,0,Math.PI*2);
+    ctx.strokeStyle=color; ctx.globalAlpha=.35; ctx.lineWidth=1; ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+
+  // core glow (layered: outer soft bloom + hot white center + fine core ring)
+  // rides the SAME breathe wave as the whole orb (just amplified) instead of
+  // its own separate pulse — one clock only, so nothing beats against itself
+  const coreR = R*0.40*(1 + Math.sin(breathePhase)*ampNow*3);
+  const bloom = ctx.createRadialGradient(cx,cy,0,cx,cy,coreR*1.7);
+  bloom.addColorStop(0,color); bloom.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.globalAlpha=.35;
+  ctx.beginPath(); ctx.arc(cx,cy,coreR*1.7,0,Math.PI*2); ctx.fillStyle=bloom; ctx.fill();
+  ctx.globalAlpha=1;
+
+  const grad = ctx.createRadialGradient(cx,cy,0,cx,cy,coreR);
+  grad.addColorStop(0,'#ffffff');
+  grad.addColorStop(0.25,color);
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath(); ctx.arc(cx,cy,coreR,0,Math.PI*2);
+  ctx.fillStyle=grad; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(cx,cy,coreR*0.62,0,Math.PI*2);
+  ctx.strokeStyle='#ffffff'; ctx.globalAlpha=.5; ctx.lineWidth=1; ctx.stroke();
+  ctx.globalAlpha=1;
+
+  // particles + connecting lines
+  const pts = particles.map(p=>{
+    p.angle += 0.12*p.speed*speedMul*dt;
+    const rr = R*p.radius;
+    return {
+      x: cx + Math.cos(p.angle)*rr,
+      y: cy + Math.sin(p.angle)*rr*0.9,
+      size: p.size, z:p.z
+    };
+  });
+  ctx.lineWidth=0.6;
+  for(let i=0;i<pts.length;i++){
+    for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x, dy=pts[i].y-pts[j].y;
+      const d=Math.hypot(dx,dy);
+      if(d<R*0.55){
+        ctx.globalAlpha = (1-d/(R*0.55))*0.25;
+        ctx.strokeStyle=color;
+        ctx.beginPath(); ctx.moveTo(pts[i].x,pts[i].y); ctx.lineTo(pts[j].x,pts[j].y); ctx.stroke();
+      }
+    }
+  }
+  pts.forEach(p=>{
+    ctx.globalAlpha=0.5+p.z*0.5;
+    const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.size*3);
+    g.addColorStop(0,'#fff'); g.addColorStop(0.4,color); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.size*3,0,Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  ctx.restore();
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

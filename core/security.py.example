@@ -1,0 +1,92 @@
+"""
+security.py.example
+
+This is a TEMPLATE, not the real file. The actual security.py used on this
+machine is excluded from the repo on purpose — it holds the real trigger
+phrases that control the assistant, and those stay private.
+
+To use this yourself:
+  1. Copy this file and rename it to security.py
+  2. Replace every "XXXXX" placeholder below with your own phrase
+  3. Never commit your real security.py (it's already in .gitignore)
+"""
+
+import os
+from core import hud_bridge
+
+STOP_FLAG_PATH = "/tmp/alita_stopped.flag"
+
+# Set your own secret trigger phrases here.
+SECRET_PHRASES = {
+    "full_stop": "XXXXX",
+    "full_resume": "XXXXX",
+    "clear_the_room": "XXXXX",
+    "lock_it_down": "XXXXX",
+    "scrub_the_trail": "XXXXX",
+}
+
+
+def is_stopped():
+    """Check whether the assistant is currently paused."""
+    return os.path.exists(STOP_FLAG_PATH)
+
+
+def full_stop():
+    """Pause everything: blocks all commands, stops the tracker service."""
+    with open(STOP_FLAG_PATH, "w") as f:
+        f.write("stopped")
+    hud_bridge.set_state("idle")
+    # add: stop tracker service / other pause logic here
+
+
+def full_resume():
+    """Resume from a full stop."""
+    if os.path.exists(STOP_FLAG_PATH):
+        os.remove(STOP_FLAG_PATH)
+    hud_bridge.set_state("listening")
+    # add: restart tracker service / other resume logic here
+
+
+def clear_the_room():
+    """Force-close a defined set of apps (browser, Discord, games, etc.)."""
+    # add: subprocess calls to close whatever apps you want covered here
+    pass
+
+
+def lock_it_down():
+    """Lock the screen."""
+    # add: subprocess call to your screen-lock command here
+    pass
+
+
+def scrub_the_trail():
+    """Wipe the activity log."""
+    # add: logic to clear your tracker's log file here
+    pass
+
+
+def check_secret(text):
+    """
+    Checks incoming transcribed text against the secret phrases.
+    Runs BEFORE the normal command menu, so a typo in a regular command
+    can never accidentally trigger one of these.
+    """
+    text = text.lower().strip()
+
+    if SECRET_PHRASES["full_stop"] in text:
+        full_stop()
+        return True
+    if SECRET_PHRASES["full_resume"] in text:
+        full_resume()
+        return True
+    if SECRET_PHRASES["clear_the_room"] in text:
+        clear_the_room()
+        return True
+    if SECRET_PHRASES["lock_it_down"] in text:
+        lock_it_down()
+        return True
+    if SECRET_PHRASES["scrub_the_trail"] in text:
+        scrub_the_trail()
+        return True
+
+    return False
