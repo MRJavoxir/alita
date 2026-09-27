@@ -4,7 +4,7 @@ A fully local, offline voice assistant that runs entirely on your own machine �
 
 ![Alita HUD](docs/hud_screenshot.png)
 
-The idea came from wanting to build something that was actually challenging enough to push my problem-solving, rather than just another project that looks good on paper. I’ve always been a big movie fan and Jarvis has been in my head for yeaars so building my own AI assistant felt like a pretty natural thing.
+The idea came from wanting to build something that was actually challenging enough to push my problem-solving, rather than just another project that looks good on paper. I’ve always been a big movie fan and Jarvis has been in my head for years so building my own AI assistant felt like a pretty natural thing.
 Of course, getting from the idea to something that actually works came with its share of headaches latency, edge cases, bugs that made absolutely no sense and a lot more time invested than I initially planned like turned to longer distance. But that’s also what made it interesting. It turned into a pretty deep rabbit hole, and seeing the whole thing come together and actually work is still satisfying.
 
 ## What it actually does
